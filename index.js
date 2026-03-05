@@ -17,29 +17,29 @@ let urlFront = [process.env.FrontEnd]
 
 const corsOptions = {
     origin: urlFront, // Allow only specific origin
-  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow specific methods if needed
-  allowedHeaders: ['Content-Type', 'Authorization'],// Whitelist the domains you want to allow
+    methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow specific methods if needed
+    allowedHeaders: ['Content-Type', 'Authorization'],// Whitelist the domains you want to allow
 }
 app.use(cors(corsOptions))
 
 
 let PORT = process.env.PORT;
 
-app.use('/api',router)
+app.use('/api', router)
 cron.schedule('0 0 1 1,7 *', async () => {
     console.log('Running balance sheet reset process...');
     await billController.resetBalanceSheet();
 });
 
 
-app.listen(PORT, ()=>console.log(`App listening ${PORT}`))
+app.listen(PORT, () => console.log(`App listening ${PORT}`))
 
-app.use((err,req,res,next)=>{
-    // console.log(err.message)
+app.use((err, req, res, next) => {
+    console.error('SERVER ERROR:', err.message)
     const statusCode = err.statusCode || 500;
     const message = err.message || 'Internal server Error';
     return res.status(statusCode).json({
-        success : false,
+        success: false,
         statusCode,
         message
     })
