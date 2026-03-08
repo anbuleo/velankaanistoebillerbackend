@@ -25,7 +25,28 @@ const saleBill = async (req, res, next) => {
         let { customerName, customerId, customerMobile, totalAmount, paidAmount, dueAmount, products, paymentType, billNumber } = req.body
         let createBy = req.user.id
 
-        let bill = new Bill({ customerName, customerId, customerMobile, totalAmount, paidAmount, dueAmount, createBy, products, paymentType, billNumber })
+        // Senior Dev Check: Data Integrity & Anti-Fraud
+        if (!products || products.length === 0) return next(errorHandler(400, 'Transaction must contain at least one product'));
+        if (Number(totalAmount) <= 0) return next(errorHandler(400, 'Invalid total amount'));
+        if (Number(paidAmount) < 0) return next(errorHandler(400, 'Paid amount cannot be negative'));
+
+        // Normalize financial data to prevent corruption
+        paidAmount = Math.max(0, Number(paidAmount));
+        totalAmount = Math.max(0, Number(totalAmount));
+        dueAmount = Math.max(0, totalAmount - paidAmount);
+
+        let bill = new Bill({
+            customerName,
+            customerId: customerId || null,
+            customerMobile,
+            totalAmount,
+            paidAmount,
+            dueAmount,
+            createBy,
+            products,
+            paymentType,
+            billNumber
+        })
 
         // console.log(bill)
 
@@ -254,7 +275,7 @@ let getBillById = async (req, res, next) => {
             message: 'Bills fetched success'
         })
     } catch (error) {
-        next(Error)
+        next(error)
     }
 }
 let overAllprofit = async (req, res, next) => {

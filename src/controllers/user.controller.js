@@ -33,10 +33,10 @@ const createUser = async (req, res, next) => {
 const getuserByadmin = async (req, res, next) => {
     try {
         let { id } = req.params
-        let admin = await User.findById({ _id: id })
-        if (admin.role !== 'admin') return errorHandler(401, 'admin only access')
+        let admin = await User.findById(id)
+        if (!admin || admin.role !== 'admin') return next(errorHandler(401, 'Admin only access'))
 
-        let user = await User.find()
+        let user = await User.find().select('-password')
 
         res.status(200).json({
             message: 'user updated',
@@ -67,10 +67,10 @@ const getuserbyId = async (req, res, next) => {
         let { id } = req.params
         let Adminid = req.user.id
         let admin = await User.findById(Adminid)
-        if (admin.role !== 'admin') return errorHandler(401, 'admin only access')
+        if (!admin || admin.role !== 'admin') return next(errorHandler(401, 'Admin only access'))
 
-        let user = await User.findById(id)
-        if (!user) return errorHandler(402, 'no user found')
+        let user = await User.findById(id).select('-password')
+        if (!user) return next(errorHandler(404, 'No user found'))
 
         res.status(200).json({
             user,
@@ -114,7 +114,7 @@ const deleteUser = async (req, res, next) => {
 
         let Adminid = req.user.id
         let admin = await User.findById(Adminid)
-        if (admin.role !== 'admin') return errorHandler(401, 'admin only access')
+        if (!admin || admin.role !== 'admin') return next(errorHandler(401, 'Admin only access'))
 
         let user = await User.findByIdAndDelete(id)
 
@@ -137,9 +137,13 @@ const signin = async (req, res, next) => {
         if (!user) return next(errorHandler(404, 'User Not Found'))
         const validPassword = bcryptjs.compareSync(password, user.password)
         if (!validPassword) return next(errorHandler(401, 'Wrong credentials'))
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-            expiresIn: process.env.JWT_EXPIRE
-        })
+
+        // Include role in payload to simplify middleware checks
+        const token = jwt.sign(
+            { id: user._id, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRE }
+        )
         const { password: pass, ...rest } = user._doc
         res.status(200).json({ token, rest: { ...rest, role: user.role, status: user.status, activeStatus: user.activeStatus } })
 
@@ -193,14 +197,14 @@ const userApproval = async (req, res, next) => {
         let { id } = req.params
         let Adminid = req.user.id
         let status = req.body
-        if (!status) return errorHandler(402, 'Status found')
+        if (!status) return next(errorHandler(400, 'Status is required'))
         // console.log(status,id)
         let admin = await User.findById(Adminid)
-        if (admin.role !== 'admin') return errorHandler(401, 'admin only access')
+        if (!admin || admin.role !== 'admin') return next(errorHandler(403, 'Admin only access'))
 
 
-        let user = await User.findByIdAndUpdate(id, status)
-        if (!user) return errorHandler(402, 'no user found')
+        let user = await User.findByIdAndUpdate(id, status, { new: true }).select('-password')
+        if (!user) return next(errorHandler(404, 'No user found'))
 
         res.status(200).json({
             user,
