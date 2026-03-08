@@ -13,12 +13,20 @@ env.config();
 const app = express()
 app.use(express.json())
 app.use(bodyparser.json())
-let urlFront = [process.env.FrontEnd]
+let urlFront = [
+    process.env.FrontEnd,
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:5175',
+    'http://localhost:5177',
+    'http://localhost:4173'
+].filter(Boolean);
+
 
 const corsOptions = {
-    origin: urlFront, // Allow only specific origin
-    methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allow specific methods if needed
-    allowedHeaders: ['Content-Type', 'Authorization'],// Whitelist the domains you want to allow
+    origin: urlFront,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
 }
 app.use(cors(corsOptions))
 

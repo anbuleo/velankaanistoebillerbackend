@@ -1,0 +1,14 @@
+[
+  {
+    "_id": "69a816360985d8c7ba02465a",
+    "name": "test",
+    "mobile": "9899999999",
+    "address": "123565",
+    "credit": null,
+    "purchase": null,
+    "role": "customer",
+    "createdAt": "2026-03-04T11:23:34.646Z",
+    "updatedAt": "2026-03-04T11:23:34.646Z",
+    "__v": 0
+  }
+]

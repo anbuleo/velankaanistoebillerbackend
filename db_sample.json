@@ -1,0 +1,55 @@
+[
+  {
+    "_id": "69a959dc7ecf0debaf4034a1",
+    "customerId": "69a816360985d8c7ba02465a",
+    "openingBalance": 0,
+    "totalPurchases": 730,
+    "totalPayments": 730,
+    "remainingBalance": 0,
+    "transactions": [
+      {
+        "type": "purchase",
+        "amount": 10,
+        "_id": "69a959dc7ecf0debaf4034a2",
+        "date": "2026-03-05T10:24:28.857Z"
+      },
+      {
+        "type": "purchase",
+        "amount": 60,
+        "_id": "69a95ca37ecf0debaf4034b4",
+        "date": "2026-03-05T10:36:19.540Z"
+      },
+      {
+        "type": "purchase",
+        "amount": 10,
+        "_id": "69a9626f7ecf0debaf4034cc",
+        "date": "2026-03-05T11:01:03.254Z"
+      },
+      {
+        "type": "purchase",
+        "amount": 150,
+        "_id": "69a966917ecf0debaf4034ee",
+        "date": "2026-03-05T11:18:41.408Z"
+      },
+      {
+        "type": "purchase",
+        "amount": 100,
+        "_id": "69a9a12a73968e3268c430d9",
+        "date": "2026-03-05T15:28:42.832Z"
+      },
+      {
+        "type": "purchase",
+        "amount": 80,
+        "_id": "69a9bf0e0609cfa79b7032ce",
+        "date": "2026-03-05T17:36:14.730Z"
+      },
+      {
+        "type": "purchase",
+        "amount": 320,
+        "_id": "69a9bf0f0609cfa79b7032d9",
+        "date": "2026-03-05T17:36:15.499Z"
+      }
+    ],
+    "__v": 6
+  }
+]

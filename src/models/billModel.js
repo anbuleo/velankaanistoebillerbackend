@@ -1,50 +1,54 @@
 import mongoose from '../common/db.connect.js';
 
-const BillSchema = new mongoose.Schema({ 
-    customerName : {
-        type : String,
-        default:'customer'
+const BillSchema = new mongoose.Schema({
+    customerName: {
+        type: String,
+        default: 'customer'
     },
-    customerId :{
+    billNumber: {
+        type: String,
+        required: false
+    },
+    customerId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref:"user",
-        default:null
+        ref: "customers",
+        default: null
     },
-    customerMobile : {
-        type : String,
-        default : null
+    customerMobile: {
+        type: String,
+        default: null
     },
-    totalAmount : {
-        type : Number,
-        required : true
+    totalAmount: {
+        type: Number,
+        required: true
     },
-    paidAmount : {
-        type : Number,
-        default : null
+    paidAmount: {
+        type: Number,
+        default: null
     },
-    dueAmount : {
-        type : Number,
-        default : null
+    dueAmount: {
+        type: Number,
+        default: null
     },
-    createBy : {
-        type : String,
-        required : true
+    createBy: {
+        type: String,
+        required: true
     },
-    products : {
-        type : Array,
-        required : true
+    products: {
+        type: Array,
+        required: true
     },
-    
-    
-    paymentType : {
-        type : String,
-        required : true
-    }    
-    
-   
-   
+
+
+    paymentType: {
+        type: String,
+        required: true
+    }
+
+
+
 }, { timestamps: true })
-const Bill = mongoose.model('bill',BillSchema)   
+const Bill = mongoose.model('bill', BillSchema)
 
 export default Bill
- 
+

@@ -14,7 +14,15 @@ const customerSchema = new mongoose.Schema({
     },
     address: {
         type: String,
-        required: true
+        required: false
+    },
+    location: {
+        type: String,
+        required: false
+    },
+    aadhaar: {
+        type: String,
+        required: false
     },
     credit: {
         type: mongoose.Schema.Types.ObjectId,
