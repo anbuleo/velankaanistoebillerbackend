@@ -15,6 +15,8 @@ app.use(express.json())
 app.use(bodyparser.json())
 let urlFront = [
     process.env.FrontEnd,
+    'https://dileo.co.in',
+    'https://www.dileo.co.in',
     'http://localhost:5173',
     'http://localhost:5174',
     'http://localhost:5175',
