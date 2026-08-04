@@ -46,9 +46,35 @@ const ProductPcsSchema = new mongoose.Schema({
     },tanglishName :{
         type:String,
         required: true
-    },MRP:{
-        type:String,
+    },
+    MRP: {
+        type: String,
         required: true
+    },
+    brand: {
+        type: String,
+        default: ''
+    },
+    gstPercentage: {
+        type: Number,
+        default: 0
+    },
+    hsnCode: {
+        type: String,
+        default: ''
+    },
+    reorderLevel: {
+        type: Number,
+        default: 10
+    },
+    expiryDate: {
+        type: Date,
+        default: null
+    },
+    supplierId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'suppliers',
+        default: null
     }
 
 },{timestamps : true})

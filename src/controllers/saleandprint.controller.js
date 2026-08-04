@@ -2,6 +2,7 @@ import Bill from "../models/billModel.js"
 import Credit from "../models/creadit.js"
 import Product from "../models/productmodel.js"
 import Customer from "../models/customerModel.js"
+import StockLog from "../models/stockLogModel.js"
 
 import env from 'dotenv'
 import { errorHandler } from "../uitils/errorHandler.js"
@@ -10,14 +11,6 @@ import BlSheet from "../models/balanceSheet.js"
 
 
 env.config()
-
-
-
-
-
-
-
-
 
 
 const saleBill = async (req, res, next) => {
@@ -45,11 +38,34 @@ const saleBill = async (req, res, next) => {
             createBy,
             products,
             paymentType,
-            billNumber
+            billNumber: billNumber || `INV-${Date.now()}`
         })
 
-        // console.log(bill)
+        // Deduct inventory stock & record audit logs
+        for (const item of products) {
+            if (item.productId) {
+                const prod = await Product.findById(item.productId);
+                if (prod) {
+                    const prevStock = Number(prod.stockQuantity) || 0;
+                    const qtySold = Number(item.productQuantity) || 1;
+                    const newStock = Math.max(0, prevStock - qtySold);
 
+                    prod.stockQuantity = newStock;
+                    await prod.save();
+
+                    await StockLog.create({
+                        productId: prod._id,
+                        productName: prod.productName,
+                        type: 'SALE',
+                        quantityChange: -qtySold,
+                        previousStock: prevStock,
+                        newStock: newStock,
+                        reason: `Sold in Bill ${bill.billNumber}`,
+                        performedBy: createBy
+                    });
+                }
+            }
+        }
 
         if (paymentType === 'credit') {
             if (!customerId || customerId.length == 0 || !bill._id) return next({ status: 400, message: 'customer Id Must for credit' })
@@ -87,22 +103,14 @@ const saleBill = async (req, res, next) => {
             }
         }
 
-        //     if(customerId?.length >0){
-
-
-        //     }
-
-        // await sendSms()
         await bill.save()
 
         res.status(201).send({
-            message: 'Sale bill genrated'
+            message: 'Sale bill generated successfully',
+            bill
         })
 
-
-
     } catch (error) {
-        // console.log(error)
         next(error)
     }
 }

@@ -10,6 +10,7 @@ router.get('/getallproducts', verifyToken, productController.getAllProducts)
 router.put('/editproduct/:id', verifyToken, productController.editProduct)
 router.put('/bulk-price-update', verifyToken, productController.bulkUpdatePrices)
 router.delete('/deleteproduct/:id', verifyToken, productController.dedleteProduct)
+router.get('/price-logs', verifyToken, productController.getPriceLogs)
 
 
 export default router
