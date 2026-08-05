@@ -33,14 +33,18 @@ const corsOptions = {
 app.use(cors(corsOptions))
 
 
-let PORT = process.env.PORT;
+let PORT = process.env.PORT || 5001;
 
-app.use('/api', router)
+app.get('/', (req, res) => {
+    res.status(200).json({ status: 'API Active', message: 'Velankanni Biller Backend Running' });
+});
+
+app.use('/api', router);
+
 cron.schedule('0 0 1 1,7 *', async () => {
     console.log('Running balance sheet reset process...');
     await billController.resetBalanceSheet();
 });
-
 
 app.listen(PORT, () => console.log(`App listening ${PORT}`))
 
