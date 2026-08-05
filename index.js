@@ -21,7 +21,7 @@ app.use(cors({
 }));
 
 app.get('/', (req, res) => {
-    res.status(200).json({ status: 'API Active', message: 'Velankanni Biller Backend Running on Vercel' });
+    res.status(200).json({ status: 'API Active', message: 'Velankanni Biller Backend Active' });
 });
 
 app.use('/api', router);
