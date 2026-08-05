@@ -32,13 +32,20 @@ const getTodayEndSummary = async (req, res, next) => {
             else if (b.paymentType === 'credit') creditSales += amount;
 
             // Gross Profit calculation
-            for (const item of b.products) {
-                const prod = await Product.findById(item.productId);
-                if (prod) {
-                    const cost = Number(prod.productCost) || 0;
-                    const price = Number(item.productPrice) || 0;
-                    const qty = Number(item.productQuantity) || 1;
-                    grossProfit += (price - cost) * qty;
+            if (Array.isArray(b.products)) {
+                for (const item of b.products) {
+                    if (item) {
+                        const price = Number(item.productPrice) || 0;
+                        const qty = Number(item.productQuantity) || 1;
+                        let cost = Number(item.productCost) || 0;
+
+                        if (cost <= 0 && item.productId && mongoose.Types.ObjectId.isValid(item.productId)) {
+                            const prod = await Product.findById(item.productId);
+                            if (prod) cost = Number(prod.productCost) || 0;
+                        }
+
+                        grossProfit += (price - cost) * qty;
+                    }
                 }
             }
         }
@@ -110,13 +117,20 @@ const closeDayEnd = async (req, res, next) => {
             else if (b.paymentType === 'online') onlineSales += amount;
             else if (b.paymentType === 'credit') creditSales += amount;
 
-            for (const item of b.products) {
-                const prod = await Product.findById(item.productId);
-                if (prod) {
-                    const cost = Number(prod.productCost) || 0;
-                    const price = Number(item.productPrice) || 0;
-                    const qty = Number(item.productQuantity) || 1;
-                    grossProfit += (price - cost) * qty;
+            if (Array.isArray(b.products)) {
+                for (const item of b.products) {
+                    if (item) {
+                        const price = Number(item.productPrice) || 0;
+                        const qty = Number(item.productQuantity) || 1;
+                        let cost = Number(item.productCost) || 0;
+
+                        if (cost <= 0 && item.productId && mongoose.Types.ObjectId.isValid(item.productId)) {
+                            const prod = await Product.findById(item.productId);
+                            if (prod) cost = Number(prod.productCost) || 0;
+                        }
+
+                        grossProfit += (price - cost) * qty;
+                    }
                 }
             }
         }

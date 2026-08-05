@@ -3,6 +3,7 @@ import Product from '../models/productmodel.js';
 import Customer from '../models/customerModel.js';
 import Expense from '../models/expenseModel.js';
 import BlSheet from '../models/balanceSheet.js';
+import mongoose from '../common/db.connect.js';
 
 const getExecutiveDashboard = async (req, res, next) => {
     try {
@@ -28,13 +29,20 @@ const getExecutiveDashboard = async (req, res, next) => {
         // Profit Calculation
         let todayGrossProfit = 0;
         for (const bill of todayBills) {
-            for (const item of bill.products) {
-                const prod = await Product.findById(item.productId);
-                if (prod) {
-                    const cost = Number(prod.productCost) || 0;
-                    const price = Number(item.productPrice) || 0;
-                    const qty = Number(item.productQuantity) || 1;
-                    todayGrossProfit += (price - cost) * qty;
+            if (Array.isArray(bill.products)) {
+                for (const item of bill.products) {
+                    if (item) {
+                        const price = Number(item.productPrice) || 0;
+                        const qty = Number(item.productQuantity) || 1;
+                        let cost = Number(item.productCost) || 0;
+
+                        if (cost <= 0 && item.productId && mongoose.Types.ObjectId.isValid(item.productId)) {
+                            const prod = await Product.findById(item.productId);
+                            if (prod) cost = Number(prod.productCost) || 0;
+                        }
+
+                        todayGrossProfit += (price - cost) * qty;
+                    }
                 }
             }
         }
@@ -89,8 +97,8 @@ const getGSTReport = async (req, res, next) => {
         let sgst = 0;
 
         for (const bill of bills) {
-            taxableAmount += Number(bill.totalAmount) * 0.85; // Approximate taxable base
-            totalGST += Number(bill.totalAmount) * 0.15;
+            taxableAmount += Number(bill.totalAmount || 0) * 0.85; // Approximate taxable base
+            totalGST += Number(bill.totalAmount || 0) * 0.15;
         }
 
         cgst = totalGST / 2;
@@ -134,19 +142,26 @@ const getPnLReport = async (req, res, next) => {
 
         let totalCOGS = 0;
         for (const bill of bills) {
-            for (const item of bill.products) {
-                const prod = await Product.findById(item.productId);
-                if (prod) {
-                    const cost = Number(prod.productCost) || 0;
-                    const qty = Number(item.productQuantity) || 1;
-                    totalCOGS += cost * qty;
+            if (Array.isArray(bill.products)) {
+                for (const item of bill.products) {
+                    if (item) {
+                        const qty = Number(item.productQuantity) || 1;
+                        let cost = Number(item.productCost) || 0;
+
+                        if (cost <= 0 && item.productId && mongoose.Types.ObjectId.isValid(item.productId)) {
+                            const prod = await Product.findById(item.productId);
+                            if (prod) cost = Number(prod.productCost) || 0;
+                        }
+
+                        totalCOGS += cost * qty;
+                    }
                 }
             }
         }
 
         const grossProfit = grossSales - totalCOGS;
         const netProfit = grossProfit - totalExpenses;
-        const netMarginPercentage = grossSales > 0 ? ((netProfit / grossSales) * 100).toFixed(2) : 0;
+        const netMarginPercentage = grossSales > 0 ? Number(((netProfit / grossSales) * 100).toFixed(2)) : 0;
 
         res.status(200).json({
             grossSales,
