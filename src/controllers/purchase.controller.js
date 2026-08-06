@@ -65,9 +65,44 @@ const createPurchase = async (req, res, next) => {
             }
         }
 
-        // Update supplier outstanding due balance
-        if (dueAmount > 0) {
-            await Supplier.findByIdAndUpdate(supplierId, { $inc: { outstandingBalance: dueAmount } });
+        // Senior Business Analyst Ledger Engine:
+        // Update supplier outstanding balance & transaction history.
+        // If paid > total (overpaid), the excess amount is automatically deducted from supplier's existing outstanding debt.
+        const supplier = await Supplier.findById(supplierId);
+        if (supplier) {
+            const currentDebt = Number(supplier.outstandingBalance) || 0;
+            const netChange = total - paid; // positive = increased debt, negative = excess paid deducting debt
+            const newDebt = Math.max(0, currentDebt + netChange);
+
+            supplier.outstandingBalance = newDebt;
+
+            if (!Array.isArray(supplier.transactions)) {
+                supplier.transactions = [];
+            }
+
+            // Log purchase transaction
+            supplier.transactions.push({
+                type: 'PURCHASE',
+                amount: total,
+                paymentMode: 'Bill Credit',
+                notes: `Purchase Bill #${billNumber || purchaseNumber}`,
+                date: new Date()
+            });
+
+            // Log payment transaction if cash/online paid during purchase entry
+            if (paid > 0) {
+                supplier.transactions.push({
+                    type: 'PAYMENT',
+                    amount: paid,
+                    paymentMode: 'Cash/Online',
+                    notes: paid > total 
+                        ? `Purchase Entry Payment (Overpaid ₹${paid - total} deducted from outstanding debt)`
+                        : `Purchase Entry Payment for Bill #${billNumber || purchaseNumber}`,
+                    date: new Date()
+                });
+            }
+
+            await supplier.save();
         }
 
         res.status(201).json({ message: 'Vendor purchase bill logged successfully', purchase: newPurchase });

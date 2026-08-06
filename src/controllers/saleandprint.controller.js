@@ -41,30 +41,32 @@ const saleBill = async (req, res, next) => {
             billNumber: billNumber || `INV-${Date.now()}`
         })
 
-        // Deduct inventory stock & record audit logs
-        for (const item of products) {
-            if (item.productId) {
-                const prod = await Product.findById(item.productId);
-                if (prod) {
-                    const prevStock = Number(prod.stockQuantity) || 0;
-                    const qtySold = Number(item.productQuantity) || 1;
-                    const newStock = Math.max(0, prevStock - qtySold);
+        // High Speed Parallel Stock Deduction & Audit Log Engine
+        if (Array.isArray(products) && products.length > 0) {
+            await Promise.all(products.map(async (item) => {
+                if (item.productId) {
+                    const prod = await Product.findById(item.productId);
+                    if (prod) {
+                        const prevStock = Number(prod.stockQuantity) || 0;
+                        const qtySold = Number(item.productQuantity) || 1;
+                        const newStock = Math.max(0, prevStock - qtySold);
 
-                    prod.stockQuantity = newStock;
-                    await prod.save();
+                        prod.stockQuantity = newStock;
+                        await prod.save();
 
-                    await StockLog.create({
-                        productId: prod._id,
-                        productName: prod.productName,
-                        type: 'SALE',
-                        quantityChange: -qtySold,
-                        previousStock: prevStock,
-                        newStock: newStock,
-                        reason: `Sold in Bill ${bill.billNumber}`,
-                        performedBy: createBy
-                    });
+                        await StockLog.create({
+                            productId: prod._id,
+                            productName: prod.productName,
+                            type: 'SALE',
+                            quantityChange: -qtySold,
+                            previousStock: prevStock,
+                            newStock: newStock,
+                            reason: `Sold in Bill ${bill.billNumber}`,
+                            performedBy: createBy
+                        });
+                    }
                 }
-            }
+            }));
         }
 
         if (paymentType === 'credit') {
