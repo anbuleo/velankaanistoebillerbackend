@@ -28,6 +28,16 @@ const saleBill = async (req, res, next) => {
         totalAmount = Math.max(0, Number(totalAmount));
         dueAmount = Math.max(0, totalAmount - paidAmount);
 
+        // Strict Sequential Bill Number Engine (010001, 010002, 010003...)
+        let finalBillNumber = billNumber;
+        const totalBillsCount = await Bill.countDocuments();
+        const expectedSeq = (totalBillsCount + 1).toString().padStart(4, '0');
+        const calculatedNumber = `01${expectedSeq}`;
+
+        if (!finalBillNumber || !finalBillNumber.startsWith('01')) {
+            finalBillNumber = calculatedNumber;
+        }
+
         let bill = new Bill({
             customerName,
             customerId: customerId || null,
@@ -38,7 +48,7 @@ const saleBill = async (req, res, next) => {
             createBy,
             products,
             paymentType,
-            billNumber: billNumber || '010001'
+            billNumber: finalBillNumber
         })
 
         // High Speed Parallel Stock Deduction & Audit Log Engine
