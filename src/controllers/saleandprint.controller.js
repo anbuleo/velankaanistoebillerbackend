@@ -38,7 +38,7 @@ const saleBill = async (req, res, next) => {
             createBy,
             products,
             paymentType,
-            billNumber: billNumber || `INV-${Date.now()}`
+            billNumber: billNumber || '010001'
         })
 
         // High Speed Parallel Stock Deduction & Audit Log Engine
