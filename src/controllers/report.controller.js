@@ -49,9 +49,14 @@ const getExecutiveDashboard = async (req, res, next) => {
 
         const todayNetProfit = todayGrossProfit - todayExpenses;
 
-        // Pending Udhar / Credit Balance
-        const balanceSheets = await BlSheet.find();
-        const pendingPayments = balanceSheets.reduce((acc, b) => acc + Math.max(0, Number(b.remainingBalance) || 0), 0);
+        // Pending Udhar / Credit Balance (Reconciled from BalanceSheets & Unpaid Bills)
+        const [balanceSheets, unpaidBills] = await Promise.all([
+            BlSheet.find(),
+            Bill.find({ dueAmount: { $gt: 0 } })
+        ]);
+        const sheetDebt = balanceSheets.reduce((acc, b) => acc + Math.max(0, Number(b.remainingBalance) || 0), 0);
+        const billDebt = unpaidBills.reduce((acc, b) => acc + Math.max(0, Number(b.dueAmount) || 0), 0);
+        const pendingPayments = Math.max(sheetDebt, billDebt);
 
         // Products & Stock Valuation
         const products = await Product.find();
