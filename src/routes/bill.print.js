@@ -12,7 +12,7 @@ router.get('/getallbalancesheet', verifyToken, saleandprintController.getAllBlan
 router.get('/profit', verifyToken, verifyAdmin, saleandprintController.overAllprofit)
 router.put('/getsalebydate', verifyToken, saleandprintController.getSaleByDate)
 router.get('/getallbillbycutomerid/:id', verifyToken, saleandprintController.getBillById)
-router.put('/editbillbyid/:id', verifyToken, verifyAdmin, saleandprintController.EditBillById)
+router.put('/editbillbyid/:id', verifyToken, saleandprintController.EditBillById)
 router.delete('/deletebyid/:id', verifyToken, verifyAdmin, saleandprintController.deleteBillById)
 router.post('/recalculate', verifyToken, verifyAdmin, saleandprintController.recalculateBalanceSheets)
 

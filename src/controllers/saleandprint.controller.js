@@ -223,15 +223,35 @@ let DeleteBalanceSheet = async (req, res, next) => {
 
 let EditBillById = async (req, res, next) => {
     try {
-        let { id } = req.params
-        let bill = await Bill.findByIdAndUpdate(id, req.body, { new: true })
+        let { id } = req.params;
+        const { customerName, customerId, customerMobile, totalAmount, paidAmount, dueAmount, products, paymentType } = req.body;
+
+        let existingBill = await Bill.findById(id);
+        if (!existingBill) return next(errorHandler(404, 'Bill not found'));
+
+        const total = Math.max(0, Number(totalAmount));
+        const paid = Math.max(0, Number(paidAmount));
+        const due = Math.max(0, total - paid);
+
+        existingBill.customerName = customerName || existingBill.customerName;
+        existingBill.customerId = customerId || null;
+        existingBill.customerMobile = customerMobile || null;
+        existingBill.totalAmount = total;
+        existingBill.paidAmount = paid;
+        existingBill.dueAmount = due;
+        existingBill.products = Array.isArray(products) ? products : existingBill.products;
+        existingBill.paymentType = paymentType || existingBill.paymentType;
+
+        await existingBill.save();
+
         res.status(200).json({
-            message: 'Your Bill updated'
-        })
+            message: `Bill #${existingBill.billNumber} updated successfully`,
+            bill: existingBill
+        });
     } catch (error) {
-        next(error)
+        next(error);
     }
-}
+};
 
 let deleteBillById = async (req, res, next) => {
     try {
