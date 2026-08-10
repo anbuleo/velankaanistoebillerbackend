@@ -10,6 +10,7 @@ import purchaseRouter from './purchase.js'
 import reportRouter from './report.js'
 import cashdrawerRouter from './cashdrawer.js'
 import dayendRouter from './dayend.js'
+import purchaseSlipRouter from './purchaseSlip.route.js'
 
 let router = express.Router();
 
@@ -24,5 +25,6 @@ router.use('/purchase', purchaseRouter)
 router.use('/report', reportRouter)
 router.use('/cashdrawer', cashdrawerRouter)
 router.use('/dayend', dayendRouter)
+router.use('/purchaseslip', purchaseSlipRouter)
 
 export default router
