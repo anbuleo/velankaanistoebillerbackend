@@ -3,6 +3,7 @@ import Credit from "../models/creadit.js"
 import Product from "../models/productmodel.js"
 import Customer from "../models/customerModel.js"
 import StockLog from "../models/stockLogModel.js"
+import mongoose from 'mongoose'
 
 import env from 'dotenv'
 import { errorHandler } from "../uitils/errorHandler.js"
@@ -231,16 +232,19 @@ let EditBillById = async (req, res, next) => {
 
         const total = Math.max(0, Number(totalAmount));
         const paid = Math.max(0, Number(paidAmount));
-        const due = Math.max(0, total - paid);
+        const due = dueAmount !== undefined ? Math.max(0, Number(dueAmount)) : Math.max(0, total - paid);
 
-        existingBill.customerName = customerName || existingBill.customerName;
-        existingBill.customerId = customerId || null;
+        existingBill.customerName = customerName || existingBill.customerName || 'Retail Customer';
+        existingBill.customerId = (customerId && mongoose.Types.ObjectId.isValid(customerId)) ? customerId : null;
         existingBill.customerMobile = customerMobile || null;
         existingBill.totalAmount = total;
         existingBill.paidAmount = paid;
         existingBill.dueAmount = due;
         existingBill.products = Array.isArray(products) ? products : existingBill.products;
-        existingBill.paymentType = paymentType || existingBill.paymentType;
+        existingBill.paymentType = paymentType || existingBill.paymentType || 'cash';
+        if (!existingBill.createBy) {
+            existingBill.createBy = req.user?.id || 'admin';
+        }
 
         await existingBill.save();
 
@@ -249,6 +253,7 @@ let EditBillById = async (req, res, next) => {
             bill: existingBill
         });
     } catch (error) {
+        console.error('EditBillById Error:', error);
         next(error);
     }
 };
