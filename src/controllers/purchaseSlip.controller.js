@@ -1,5 +1,5 @@
 import PurchaseSlip from '../models/purchaseSlipModel.js';
-import { errorHandler } from '../common/error.js';
+import { errorHandler } from '../uitils/errorHandler.js';
 
 // Create a new purchase slip
 export const createPurchaseSlip = async (req, res, next) => {
