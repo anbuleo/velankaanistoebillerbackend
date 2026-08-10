@@ -57,9 +57,11 @@ const saleBill = async (req, res, next) => {
             finalBillNumber = calculatedNumber;
         }
 
+        const validCustomerId = (customerId && typeof customerId === 'string' && mongoose.Types.ObjectId.isValid(customerId)) ? customerId : null;
+
         let bill = new Bill({
             customerName,
-            customerId: customerId || null,
+            customerId: validCustomerId,
             customerMobile,
             totalAmount,
             paidAmount,
@@ -74,7 +76,7 @@ const saleBill = async (req, res, next) => {
         // High Speed Parallel Stock Deduction & Audit Log Engine
         if (Array.isArray(products) && products.length > 0) {
             await Promise.all(products.map(async (item) => {
-                if (item.productId) {
+                if (item.productId && mongoose.Types.ObjectId.isValid(item.productId)) {
                     const prod = await Product.findById(item.productId);
                     if (prod) {
                         const prevStock = Number(prod.stockQuantity) || 0;
@@ -100,23 +102,23 @@ const saleBill = async (req, res, next) => {
         }
 
         if (paymentType === 'credit') {
-            if (!customerId || customerId.length == 0 || !bill._id) return next({ status: 400, message: 'customer Id Must for credit' })
+            if (!validCustomerId || !bill._id) return next(errorHandler(400, 'Valid customer ID is required for credit transactions'));
 
-            let oldbalan = await BlSheet.findOne({ customerId }).sort({ _id: -1 });
+            let oldbalan = await BlSheet.findOne({ customerId: validCustomerId }).sort({ _id: -1 });
             if (oldbalan) {
                 oldbalan.totalPurchases += Number(totalAmount);
                 oldbalan.remainingBalance += Number(totalAmount);
                 oldbalan.transactions.push({ type: 'purchase', amount: totalAmount });
                 await oldbalan.save();
             } else {
-                let balancesh = new BlSheet({ customerId, totalPurchases: totalAmount, totalPayments: 0, remainingBalance: totalAmount, transactions: [{ type: 'purchase', amount: totalAmount }] })
+                let balancesh = new BlSheet({ customerId: validCustomerId, totalPurchases: totalAmount, totalPayments: 0, remainingBalance: totalAmount, transactions: [{ type: 'purchase', amount: totalAmount }] })
                 await balancesh.save()
             }
 
-            let credit = new Credit({ BillId: bill._id, customerId })
+            let credit = new Credit({ BillId: bill._id, customerId: validCustomerId })
             await credit.save()
-        } else if ((paymentType === 'online' || paymentType === 'cash') && customerId) {
-            let oldbalan = await BlSheet.findOne({ customerId }).sort({ _id: -1 });
+        } else if ((paymentType === 'online' || paymentType === 'cash') && validCustomerId) {
+            let oldbalan = await BlSheet.findOne({ customerId: validCustomerId }).sort({ _id: -1 });
             if (oldbalan) {
                 oldbalan.totalPurchases += Number(totalAmount);
                 oldbalan.totalPayments += Number(totalAmount);
@@ -125,7 +127,7 @@ const saleBill = async (req, res, next) => {
                 await oldbalan.save();
             } else {
                 let balancesh = new BlSheet({
-                    customerId,
+                    customerId: validCustomerId,
                     totalPurchases: totalAmount,
                     totalPayments: totalAmount,
                     remainingBalance: 0,
