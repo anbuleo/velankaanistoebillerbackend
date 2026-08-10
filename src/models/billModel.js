@@ -43,6 +43,11 @@ const BillSchema = new mongoose.Schema({
     paymentType: {
         type: String,
         required: true
+    },
+    idempotencyKey: {
+        type: String,
+        default: null,
+        index: true
     }
 
 

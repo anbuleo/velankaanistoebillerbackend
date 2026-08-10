@@ -16,8 +16,26 @@ env.config()
 
 const saleBill = async (req, res, next) => {
     try {
-        let { customerName, customerId, customerMobile, totalAmount, paidAmount, dueAmount, products, paymentType, billNumber } = req.body
-        let createBy = req.user.id
+        let { customerName, customerId, customerMobile, totalAmount, paidAmount, dueAmount, products, paymentType, billNumber, idempotencyKey } = req.body
+        let createBy = req.user?.id || 'system'
+
+        // Idempotency Lock: Prevent Duplicate Bill Creation & Double Stock Deductions
+        let existingBill = null
+        if (idempotencyKey) {
+            existingBill = await Bill.findOne({ idempotencyKey })
+        }
+        if (!existingBill && billNumber) {
+            existingBill = await Bill.findOne({ billNumber })
+        }
+
+        if (existingBill) {
+            console.log(`[IDEMPOTENCY LOCK] Duplicate request prevented for Bill #${existingBill.billNumber}. Returning existing record.`)
+            return res.status(200).json({
+                message: 'Bill already created (Idempotent response)',
+                bill: existingBill,
+                isDuplicatePrevented: true
+            })
+        }
 
         // Senior Dev Check: Data Integrity & Anti-Fraud
         if (!products || products.length === 0) return next(errorHandler(400, 'Transaction must contain at least one product'));
@@ -49,7 +67,8 @@ const saleBill = async (req, res, next) => {
             createBy,
             products,
             paymentType,
-            billNumber: finalBillNumber
+            billNumber: finalBillNumber,
+            idempotencyKey: idempotencyKey || null
         })
 
         // High Speed Parallel Stock Deduction & Audit Log Engine
