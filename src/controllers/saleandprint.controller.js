@@ -19,17 +19,14 @@ const saleBill = async (req, res, next) => {
         let { customerName, customerId, customerMobile, totalAmount, paidAmount, dueAmount, products, paymentType, billNumber, idempotencyKey } = req.body
         let createBy = req.user?.id || 'system'
 
-        // Idempotency Lock: Prevent Duplicate Bill Creation & Double Stock Deductions
+        // Idempotency Lock: Prevent Duplicate Bill Creation & Double Stock Deductions via unique idempotencyKey
         let existingBill = null
         if (idempotencyKey) {
             existingBill = await Bill.findOne({ idempotencyKey })
         }
-        if (!existingBill && billNumber) {
-            existingBill = await Bill.findOne({ billNumber })
-        }
 
         if (existingBill) {
-            console.log(`[IDEMPOTENCY LOCK] Duplicate request prevented for Bill #${existingBill.billNumber}. Returning existing record.`)
+            console.log(`[IDEMPOTENCY LOCK] Duplicate request prevented for key ${idempotencyKey}. Returning existing record.`)
             return res.status(200).json({
                 message: 'Bill already created (Idempotent response)',
                 bill: existingBill,
@@ -47,14 +44,17 @@ const saleBill = async (req, res, next) => {
         totalAmount = Math.max(0, Number(totalAmount));
         dueAmount = Math.max(0, totalAmount - paidAmount);
 
-        // Strict Sequential Bill Number Engine (010001, 010002, 010003...)
+        // Strict Sequential Unique Bill Number Engine (010001, 010002, 010003...)
         let finalBillNumber = billNumber;
         const totalBillsCount = await Bill.countDocuments();
-        const expectedSeq = (totalBillsCount + 1).toString().padStart(4, '0');
-        const calculatedNumber = `01${expectedSeq}`;
 
-        if (!finalBillNumber || !finalBillNumber.startsWith('01')) {
-            finalBillNumber = calculatedNumber;
+        if (!finalBillNumber || !finalBillNumber.startsWith('01') || await Bill.findOne({ billNumber: finalBillNumber })) {
+            let seq = totalBillsCount + 1;
+            finalBillNumber = `01${seq.toString().padStart(4, '0')}`;
+            while (await Bill.findOne({ billNumber: finalBillNumber })) {
+                seq++;
+                finalBillNumber = `01${seq.toString().padStart(4, '0')}`;
+            }
         }
 
         const validCustomerId = (customerId && typeof customerId === 'string' && mongoose.Types.ObjectId.isValid(customerId)) ? customerId : null;
